@@ -1,0 +1,6 @@
+name = "Islandora Dump Datastreams"
+description = "Utility module that writes out all datastreams from an object to a directory when the object is ingested."
+package = Islandora Tools
+version = 7.x-dev
+core = 7.x
+dependencies[] = islandora

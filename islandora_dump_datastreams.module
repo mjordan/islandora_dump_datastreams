@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * @file
+ * Module file.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_dump_datastreams_menu() {
+  $items = array();
+  $items['admin/islandora/tools/dump_datastreams'] = array(
+    'title' => 'Islandora Dump Datastreams',
+    'description' => 'Configure the Islandora Dump Datastreams module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_dump_datastreams_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Admin settings form builder.
+ */
+function islandora_dump_datastreams_admin_settings() {
+  $form['islandora_dump_datastreams_output_dir'] = array(
+    '#title' => t('Output directory'),
+    '#type' => 'textfield',
+    '#size' => 100,
+    '#default_value' => variable_get('islandora_dump_datastreams_output_dir', '/tmp'),
+    '#description' => t("Absolute path to directory where objects will be dumped. Must exist."),
+    '#maxlength' => 255,
+  );
+  $form['islandora_dump_datastreams_skip_dsids'] = array(
+    '#title' => t('Output directory'),
+    '#type' => 'textfield',
+    '#size' => 100,
+    '#default_value' => variable_get('islandora_dump_datastreams_skip_dsids', 'RELS-EXT'),
+    '#description' => t("Comma-separated list of datastream IDs to not dump."),
+    '#maxlength' => 255,
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_islandora_object_ingested().
+ */
+function islandora_dump_datastreams_islandora_object_ingested(AbstractObject $object) {
+  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
+  if (!is_writable($base_output_dir)) {
+    return;
+  }
+  foreach ($object as $ds) {
+    if ($ds->id != 'RELS-EXT') {
+      $mime_detect = new MimeDetect();
+      $extension = $mime_detect->getExtension($ds->mimetype);
+      $filename = $ds->id . '.' . $extension;
+
+      $object_dir_name = preg_replace('/:/', '_', $object->id);
+      $output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $object_dir_name;
+      if (!file_exists($output_dir)) {
+        mkdir($output_dir, 0700);
+      }
+      $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $object_dir .
+        DIRECTORY_SEPARATOR . $filename;
+
+      $ds->getContent($ds_output_path);
+    }
+  }
+}
+
+/**
+ * Implements hook_islandora_datastream_ingested().
+ */
+function islandora_dump_datastreams_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
+  $skip = variable_get('islandora_dump_datastreams_skip_dsids', 'RELS-EXT');
+  $skip = explode(',', $skip);
+  $dsids_to_skip = array();
+  foreach ($skip as &$dsid) {
+    $dsid = trim($dsid);
+    $dsids_to_skip[] = $dsid;
+  }
+  if (in_array($datastream->id, $dsids_to_skip)) {
+    return;
+  }
+  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
+  if (!is_writable($base_output_dir)) {
+    return;
+  }
+
+  $mime_detect = new MimeDetect();
+  $extension = $mime_detect->getExtension($datastream->mimetype);
+  $filename = $datastream->id . '.' . $extension;
+
+  $object_dir_name = preg_replace('/:/', '_', $object->id);
+  $output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $object_dir_name;
+  if (!file_exists($output_dir)) {
+    mkdir($output_dir, 0700);
+  }
+  $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $object_dir .
+    DIRECTORY_SEPARATOR . $filename;
+
+  $datastream->getContent($ds_output_path);
+}
