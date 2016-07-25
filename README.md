@@ -47,9 +47,9 @@ The names of the object subdirectories are derived from the object's PID so they
 
 ## Usage in conjuction with the Islandora Batch with Derivs module
 
-As stated above, this module was originally intended to generate input for the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module as part of a strategy for speeding up large ingests. This strategy takes advantage of the idea that having pregenerated datastreams allows you to enable Islandora's "Defer derivative generation during ingest" option, which prevents all derivative-creation code from being fired, and which increases ingest throughput substantially.
+As stated above, this module was originally intended to generate input for the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module as part of a strategy for speeding up large ingests. This strategy takes advantage of the idea that having pregenerated datastreams allows you to enable Islandora's "Defer derivative generation during ingest" option, which prevents all derivative-creation code from being fired, increasing ingest throughput substantially.
 
-One possible scenario is to set up a number of "worker" Islandora instances (using [Islandora Vagrant](https://github.com/Islandora-Labs/islandora_vagrant), for example), and then to ingest content into them using the standard Islandora Batch modules, [Batch](https://github.com/Islandora/islandora_batch), [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch). Enabling Islandora Dump Datastreams on the worker Islandoras will result in a set of pregenerated datastreams that can then be ingested into the production Islandora quickly using Islandora Batch with Derivs. This strategy can be scaled up to massively parallelize the generation of derivatives.
+One possible scenario is to set up a number of "worker" Islandora instances (using [Islandora Vagrant](https://github.com/Islandora-Labs/islandora_vagrant), for example), and then to ingest content into them using the standard Islandora Batch modules, [Batch](https://github.com/Islandora/islandora_batch), [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch). Enabling Islandora Dump Datastreams on the worker Islandoras will result in a set of pregenerated datastreams that can then be ingested into the production Islandora quickly using Islandora Batch with Derivs. This strategy can be scaled up easily to massively parallelize the generation of derivatives.
 
 ## Maintainer
 
@@ -63,6 +63,7 @@ Pull requests are welcome, as are use cases and suggestions.
 
 * Add logic to output newspaper and book objects and all their pages' derivatives so that they can be ingested with [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch)
 * Add logic to output generic compound objects and their childrens' derivatives
+* Add the ability to purge an object after it has been dumped, so that worker Islandora instances do not not need to keep two "copies" of each object (the ingested copy and the dumped copy)
 
 ## License
 
