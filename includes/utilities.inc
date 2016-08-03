@@ -14,7 +14,7 @@
 function islandora_dump_datastreams_get_supported_cmodels() {
   return array(
     'islandora:bookCModel',
-    // 'islandora:compoundCModel',
+    'islandora:compoundCModel',
     'islandora:newspaperIssueCModel',
     'islandora:sp-audioCModel',
     'islandora:sp_basic_image',
@@ -37,13 +37,14 @@ function islandora_dump_datastreams_get_supported_cmodels() {
 function islandora_dump_datastreams_get_cmodels() {
   module_load_include('inc', 'islandora', 'includes/utilities');
   $cmodels = islandora_get_content_models();
+  $supported_cmodels = islandora_dump_datastreams_get_supported_cmodels();
   $options = array();
   foreach ($cmodels as $cmodel) {
     $pid = $cmodel['pid'];
-    $options[$pid] = $cmodel['label'];
+    if (in_array($pid, $supported_cmodels)) {
+      $options[$pid] = $cmodel['label'];
+    }
   }
-  $supported_cmodels = islandora_dump_datastreams_get_supported_cmodels();
-  $options = array_intersect(array_keys($options), $supported_cmodels);
   return $options;
 }
 
@@ -80,13 +81,18 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
     if (!in_array($ds->id, $dsids_to_skip)) {
       $mime_detect = new MimeDetect();
       $extension = $mime_detect->getExtension($ds->mimetype);
+      if ($ds->id == 'DC') {
+        // To prevent getting .bin.
+        $extension = 'xml';
+      }
       $filename = $ds->id . '.' . $extension;
 
       $object_dir_name = preg_replace('/:/', '_', $object->id);
       $output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $object_dir_name;
       if (!file_exists($output_dir)) {
-        // Loose permissions but probably not a huge security risk. There is a
-        // note in the admin form indicating this.
+        // The default permissions assigned by mkdir() are pretty loose but
+        // this is probably not a huge security risk. There is a note in the
+        // admin form indicating this.
         mkdir($output_dir);
       }
       $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $filename;
@@ -94,6 +100,7 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
       $ds->getContent($ds_output_path);
     }
   }
+  islandora_dump_datastreams_log_object_dump($object->id, $output_dir);
 }
 
 /**
@@ -123,10 +130,10 @@ function islandora_dump_datastreams_dump_book(AbstractObject $object) {
  *
  * @param AbstractObject $object
  *   The object that has just been ingested.
- * @param AbstractObject $datastream
+ * @param AbstractDatastream $datastream
  *   The datastream that has just been ingested.
  */
-function islandora_dump_datastreams_dump_datastream(AbstractObject $object, AbstractObject $datastream) {
+function islandora_dump_datastreams_dump_datastream(AbstractObject $object, AbstractDatastream $datastream) {
   $dsids_to_skip = islandora_dump_datastreams_dsids_to_skip();
   if (in_array($datastream->id, $dsids_to_skip)) {
     return;
@@ -134,6 +141,11 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
 
   $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
   if (!is_writable($base_output_dir)) {
+    return;
+  }
+
+  // DC and RELS-EXT are dumped in islandora_dump_datastreams_dump_single().
+  if ($datastream->id == 'DC' || $datastream->id == 'RELS-EXT') {
     return;
   }
 
@@ -151,4 +163,17 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
   $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $filename;
 
   $datastream->getContent($ds_output_path);
+}
+
+/**
+ * Logs the dump to the watchdog.
+ *
+ * @param string $pid
+ *   The PID of the object that has just been dumped.
+ * @param string $path
+ *   The path the object was dumpted to.
+ */
+function islandora_dump_datastreams_log_object_dump($pid, $path) {
+  if (variable_get('islandora_dump_datastreams_log_dumps', 0)) {
+  }
 }

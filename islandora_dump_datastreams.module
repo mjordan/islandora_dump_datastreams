@@ -32,12 +32,25 @@ function islandora_dump_datastreams_admin_settings() {
     '#description' => t('Only check this box if you want to dump objects
       and datastreams, such as during batch ingests.'),
   );
+  $form['islandora_dump_datastreams_log_dumps'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log dumps to watchdog.'),
+    '#default_value' => variable_get('islandora_dump_datastreams_log_dumps', 0),
+    '#description' => t('Object PIDs will be logged, not datastream IDs.'),
+  );
+  $output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
+  if (is_writable($output_dir)) {
+    $output_dir_message = '<br /><img src="' . url('misc/watchdog-ok.png') . '"/>' . t('Output directory @dir is ready.', array('@dir' => $output_dir));
+  }
+  else {
+    $output_dir_message = '<br /><img src="' . url('misc/watchdog-error.png') . '"/>' . t('Output directory @dir does not exist or is not writable by the web server.');
+  }
   $form['islandora_dump_datastreams_output_dir'] = array(
     '#title' => t('Output directory'),
     '#type' => 'textfield',
     '#size' => 100,
     '#default_value' => variable_get('islandora_dump_datastreams_output_dir', '/tmp'),
-    '#description' => t("Absolute path to directory where objects will be dumped. Must exist. Note that object-level directories are given world-readable permissions."),
+    '#description' => t("Absolute path to directory where objects will be dumped. Must exist. Note that object-level directories are given world-readable permissions. " . $output_dir_message),
     '#maxlength' => 255,
   );
   $form['islandora_dump_datastreams_skip_dsids'] = array(
@@ -67,6 +80,9 @@ function islandora_dump_datastreams_islandora_object_ingested(AbstractObject $ob
   if (!variable_get('islandora_dump_datastreams_enable', 0)) {
     return;
   }
+  if (!in_array(variable_get('islandora_dump_datastreams_cmodel', ''), $object->models)) {
+    return;
+  }
   module_load_include('inc', 'islandora_dump_datastreams', 'includes/utilities');
   switch (TRUE) {
     case (in_array('islandora:newspaperIssueCModel', $object->models)):
@@ -84,6 +100,9 @@ function islandora_dump_datastreams_islandora_object_ingested(AbstractObject $ob
  */
 function islandora_dump_datastreams_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
   if (!variable_get('islandora_dump_datastreams_enable', 0)) {
+    return;
+  }
+  if (!in_array(variable_get('islandora_dump_datastreams_cmodel', ''), $object->models)) {
     return;
   }
   module_load_include('inc', 'islandora_dump_datastreams', 'includes/utilities');
