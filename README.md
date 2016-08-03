@@ -1,6 +1,6 @@
 # Islandora Dump Datastreams
 
-Utility module that writes out an object's datastreams to the specified directory upon ingestion. The original use case for this module was to generate derivates for ingestion into another Islandora instance using the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module. But, its output could be used for other purposes, such as backup, migration, or preservation purposes.
+Utility module that writes out an object's datastreams to the specified directory upon ingestion. The original use case for this module was to generate derivates for ingestion into another Islandora instance using the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module. But, its output could be used for other purposes, such as backup, migration, or preservation storage.
 
 Currently, this module only dumps datastreams for objects that do not have any children (e.g. basic image, large image, PDF, video, audio, etc.).
 
@@ -10,9 +10,11 @@ Currently, this module only dumps datastreams for objects that do not have any c
 
 ## Usage
 
-Enable this module, and configure it at admin/islandora/tools/dump_datastreams. Options include the output directory and a list of datastream IDs that you do not want dumped.
+Enable this module, and configure it at admin/islandora/tools/dump_datastreams. This module has a kill switch ("Enable dumping of objects and their datastreams.") and only dumps out files if that box is checked.
 
-> It is extremely important that you are aware when this module is enabled, since it makes a copy of every object you ingest into your Islandora.
+> It is extremely important that you are aware when this module is enabled and active, since it makes a copy of every object you ingest into your Islandora.
+
+The other configuration options - output directory, DSIDs to exclude, and content model - are pretty self-explanatory.
 
 ### Example output
 

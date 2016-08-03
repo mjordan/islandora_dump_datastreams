@@ -66,7 +66,9 @@ function islandora_dump_datastreams_dsids_to_skip() {
 }
 
 /**
- * Creates the object-level output directory for single-file objects.
+ * Creates the object-level output directory for non-compound objects.
+ *
+ * E.g., image, PDF, video, paged content.
  *
  * @param AbstractObject $object
  *   The object that has just been ingested.
@@ -79,12 +81,7 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
   }
   foreach ($object as $ds) {
     if (!in_array($ds->id, $dsids_to_skip)) {
-      $mime_detect = new MimeDetect();
-      $extension = $mime_detect->getExtension($ds->mimetype);
-      if ($ds->id == 'DC') {
-        // To prevent getting .bin.
-        $extension = 'xml';
-      }
+      $extension = islandora_dump_datastreams_get_extension($ds->id, $ds->mimetype);
       $filename = $ds->id . '.' . $extension;
 
       $object_dir_name = preg_replace('/:/', '_', $object->id);
@@ -97,7 +94,9 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
       }
       $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $filename;
 
-      $ds->getContent($ds_output_path);
+      if (!file_exists($ds_output_path)) {
+        $ds->getContent($ds_output_path);
+      }
     }
   }
   islandora_dump_datastreams_log_object_dump($object->id, $output_dir);
@@ -110,8 +109,24 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
  *   The object that has just been ingested.
  */
 function islandora_dump_datastreams_dump_newspaper(AbstractObject $object) {
-  // @todo: Get pages and write them out in the structure required by
-  // the Newspaper Batch module.
+  /*
+  @todo: Get pages and write them out in the structure required by
+  the Newspaper Batch module:
+
+  my_batch/
+      issue1/
+          MODS.xml
+          1/
+              OBJ.tiff
+              JP2.jp2
+              OCR.txt
+              TN.jpg
+          2/
+              OBJ.tiff
+              JP2.jp2
+              OCR.txt
+              TN.jpg
+  */
 }
 
 /**
@@ -121,8 +136,21 @@ function islandora_dump_datastreams_dump_newspaper(AbstractObject $object) {
  *   The object that has just been ingested.
  */
 function islandora_dump_datastreams_dump_book(AbstractObject $object) {
-  // @todo: Get pages and write them out in the structure required by
-  // the Book Batch module.
+  /*
+  @todo: Get pages and write them out in the structure required by
+  the Book Batch module:
+
+  /tmp/batch_ingest/
+   └── book/
+        ├── 1/
+        │   └── OBJ.tif
+        ├── 2/
+        │   ├── OBJ.tif
+        │   ├── OCR.txt
+        │   ├── MODS.xml
+        │   └── HOCR.shtml
+        └── MODS.xml
+  */
 }
 
 /**
@@ -134,23 +162,16 @@ function islandora_dump_datastreams_dump_book(AbstractObject $object) {
  *   The datastream that has just been ingested.
  */
 function islandora_dump_datastreams_dump_datastream(AbstractObject $object, AbstractDatastream $datastream) {
+  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
   $dsids_to_skip = islandora_dump_datastreams_dsids_to_skip();
   if (in_array($datastream->id, $dsids_to_skip)) {
     return;
   }
-
-  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
   if (!is_writable($base_output_dir)) {
     return;
   }
 
-  // DC and RELS-EXT are dumped in islandora_dump_datastreams_dump_single().
-  if ($datastream->id == 'DC' || $datastream->id == 'RELS-EXT') {
-    return;
-  }
-
-  $mime_detect = new MimeDetect();
-  $extension = $mime_detect->getExtension($datastream->mimetype);
+  $extension = islandora_dump_datastreams_get_extension($datastream->id, $datastream->mimetype);
   $filename = $datastream->id . '.' . $extension;
 
   $object_dir_name = preg_replace('/:/', '_', $object->id);
@@ -162,7 +183,32 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
   }
   $ds_output_path = $output_dir . DIRECTORY_SEPARATOR . $filename;
 
-  $datastream->getContent($ds_output_path);
+  if (!file_exists($ds_output_path)) {
+    $datastream->getContent($ds_output_path);
+  }
+}
+
+/**
+ * Logs the dump to the watchdog.
+ *
+ * @param string $dsid
+ *   The DSID of the datastream.
+ * @param string $mimetype
+ *   The MimeType of the datastream.
+ *
+ * @return string
+ *   The extension to assign to the datastream's file, without the period.
+ */
+function islandora_dump_datastreams_get_extension($dsid, $mimetype) {
+  if ($dsid == 'DC') {
+    // To prevent getting .bin.
+    $extension = 'xml';
+  }
+  else {
+    $mime_detect = new MimeDetect();
+    $extension = $mime_detect->getExtension($mimetype);
+  }
+  return $extension;
 }
 
 /**
@@ -175,5 +221,7 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
  */
 function islandora_dump_datastreams_log_object_dump($pid, $path) {
   if (variable_get('islandora_dump_datastreams_log_dumps', 0)) {
+    watchdog('islandora_dump_datastream', 'Object !pid dumped to !path.',
+      array('!pid' => $pid, '!path' => $path));
   }
 }
