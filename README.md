@@ -22,26 +22,23 @@ The other configuration options - output directory, DSIDs to exclude, and conten
 
 ### Example output
 
-Each object that is ingested will get its own subdirectory beneath the output directory. Within each object directory will be written all the files that correspond to the object's datastreams, named using datastream IDs and extensions that map to the datastream's MimeType:
+Each object that is ingested will get its own subdirectory beneath the output directory. Within each object directory will be written all the files that correspond to the object's datastreams (excluding datastreams that you configure the module to "skip"), named using datastream IDs and extensions that map to the datastream's MimeType:
 
 ```
 /tmp/ouputdirectory
 ├── islandora_23 
-│   ├── DC.xml
 │   ├── MEDIUM_SIZE.jpg
 │   ├── MODS.xml
 │   ├── OBJ.jpg
 │   ├── TECHMD.xml
 │   └── TN.jpg
 ├── islandora_24
-│   ├── DC.xml
 │   ├── MEDIUM_SIZE.jpg
 │   ├── MODS.xml
 │   ├── OBJ.jpg
 │   ├── TECHMD.xml
 │   └── TN.jpg
 └── islandora_25
-    ├── DC.xml
     ├── MEDIUM_SIZE.jpg
     ├── MODS.xml
     ├── OBJ.jpg
@@ -49,7 +46,7 @@ Each object that is ingested will get its own subdirectory beneath the output di
     └── TN.jpg
 ```
 
-The names of the object subdirectories are derived from the object's PID so they are guaranteed to be unique. The output produced for books and newspaper issues is consistent with the input documented in the READMEs for the [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) and [Islandora Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch) modules.
+The names of the object subdirectories are derived from the source object's PID so they are guaranteed to be unique. The output produced for books and newspaper issues is consistent with the input documented in the READMEs for the [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) and [Islandora Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch) modules.
 
 ## Usage in conjuction with the Islandora Batch with Derivs (and Islandora Book Batch and Islandora Newspaper Batch) modules
 
@@ -59,7 +56,7 @@ One possible scenario is to set up a number of "worker" Islandora instances (usi
 
 ![Using worker instances of Islandora to pregenerate derivatives for ingestion](https://dl.dropboxusercontent.com/u/1015702/linked_to/Islandora%20Dump%20Datastreams%20-%20Using%20worker%20Islandora%20instances%20to%20generate%20derivatives%20for%20ingest.png)
 
-Some datastreams, in particular RELS-EXT, RELS-INT, and DC, contain PIDs and other information that is generated during ingest that will conflict or override the equivalent data generated on reingest. If you are using this module in the scenario described here, you will want to exlude those datastreams from this module's output.
+PIDs, and relationships between objects, are not guaranteed to be portable across Islandora instances. Consequently, PIDs generated for objects in the worker Islandora instances should be considered "temporary" since the objects will get new PIDs when they are reingested into the production Islandora instance. Some datastreams, in particular RELS-EXT, RELS-INT, and DC, contain source objects' PIDs and relationship information that will conflict or override the equivalent data generated on reingest. If you are using this module in the scenario described here, you will want to exlude those datastreams from this module's output.
 
 ## Maintainer
 
