@@ -57,6 +57,8 @@ As stated above, this module was originally intended to generate input for the [
 
 One possible scenario is to set up a number of "worker" Islandora instances (using [Islandora Vagrant](https://github.com/Islandora-Labs/islandora_vagrant), for example), and then to ingest content into them using the standard Islandora Batch modules, [Batch](https://github.com/Islandora/islandora_batch), [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch). Enabling Islandora Dump Datastreams on the worker Islandoras will result in a set of pregenerated datastreams that can then be ingested into the production Islandora quickly using Islandora Batch with Derivs. This strategy can be scaled up easily to massively parallelize the generation of derivatives.
 
+![Using worker instances of Islandora to pregenerate derivatives for ingestion](https://dl.dropboxusercontent.com/u/1015702/linked_to/Islandora%20Dump%20Datastreams%20-%20Using%20worker%20Islandora%20instances%20to%20generate%20derivatives%20for%20ingest.png)
+
 Some datastreams, in particular RELS-EXT, RELS-INT, and DC, contain PIDs and other information that is generated during ingest that will conflict or override the equivalent data generated on reingest. If you are using this module in the scenario described here, you will want to exlude those datastreams from this module's output.
 
 ## Maintainer
