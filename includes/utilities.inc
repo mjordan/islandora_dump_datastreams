@@ -106,9 +106,11 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
  * Creates the object-level output directory for newspaper issue objects.
  *
  * @param AbstractObject $object
- *   The object that has just been ingested.
+ *   The newspaper issue object that has just been ingested.
  */
 function islandora_dump_datastreams_dump_newspaper(AbstractObject $object) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $pages = islandora_paged_content_get_pages($object);
   /*
   @todo: Get pages and write them out in the structure required by
   the Newspaper Batch module:
@@ -133,9 +135,19 @@ function islandora_dump_datastreams_dump_newspaper(AbstractObject $object) {
  * Creates the object-level output directory for book objects.
  *
  * @param AbstractObject $object
- *   The object that has just been ingested.
+ *   The book object that has just been ingested.
  */
 function islandora_dump_datastreams_dump_book(AbstractObject $object) {
+  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
+  $object_dir_name = preg_replace('/:/', '_', $object->id);
+  $output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $object_dir_name;
+  if (!file_exists($output_dir)) {
+    mkdir($output_dir);
+  }
+
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $pages = islandora_paged_content_get_pages($object);
+  $dsids_to_skip = islandora_dump_datastreams_dsids_to_skip();
   /*
   @todo: Get pages and write them out in the structure required by
   the Book Batch module:
@@ -151,6 +163,21 @@ function islandora_dump_datastreams_dump_book(AbstractObject $object) {
         │   └── HOCR.shtml
         └── MODS.xml
   */
+  foreach ($pages as $page) {
+    $page_dir = $output_dir . DIRECTORY_SEPARATOR . $page['page'];
+    mkdir($page_dir);
+    $page_object = islandora_object_load($page['pid']);
+    foreach ($page_object as $ds) {
+      if (!in_array($ds->id, $dsids_to_skip)) {
+        $extension = islandora_dump_datastreams_get_extension($ds->id, $ds->mimetype);
+        $filename = $ds->id . '.' . $extension;
+        $ds_output_path = $page_dir . DIRECTORY_SEPARATOR . $filename;
+        if (!file_exists($ds_output_path)) {
+          $ds->getContent($ds_output_path);
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -186,6 +213,18 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
   if (!file_exists($ds_output_path)) {
     $datastream->getContent($ds_output_path);
   }
+}
+
+/**
+ * Writes a datastream file for paged objects to the output directory.
+ *
+ * @param AbstractObject $object
+ *   The object that has just been ingested.
+ * @param AbstractDatastream $datastream
+ *   The datastream that has just been ingested.
+ */
+function islandora_dump_datastreams_dump_datastream_paged_cmodels(AbstractObject $object, AbstractDatastream $datastream) {
+
 }
 
 /**

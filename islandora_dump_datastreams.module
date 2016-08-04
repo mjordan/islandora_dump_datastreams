@@ -99,6 +99,13 @@ function islandora_dump_datastreams_islandora_object_ingested(AbstractObject $ob
  * Implements hook_islandora_datastream_ingested().
  */
 function islandora_dump_datastreams_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
+  // We process book and newspaper pages using their own function.
+  if (in_array('islandora:pageCModel', $object->models) ||
+    in_array('islandora:newspaperPageCModel', $object->models)) {
+    module_load_include('inc', 'islandora_dump_datastreams', 'includes/utilities');
+    islandora_dump_datastreams_dump_datastream_paged_cmodels($object, $datastream);
+  }
+
   if (!variable_get('islandora_dump_datastreams_enable', 0)) {
     return;
   }
