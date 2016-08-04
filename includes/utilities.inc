@@ -103,41 +103,12 @@ function islandora_dump_datastreams_dump_single(AbstractObject $object) {
 }
 
 /**
- * Creates the object-level output directory for newspaper issue objects.
- *
- * @param AbstractObject $object
- *   The newspaper issue object that has just been ingested.
- */
-function islandora_dump_datastreams_dump_newspaper(AbstractObject $object) {
-  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $pages = islandora_paged_content_get_pages($object);
-  /*
-  @todo: Get pages and write them out in the structure required by
-  the Newspaper Batch module:
-
-  my_batch/
-      issue1/
-          MODS.xml
-          1/
-              OBJ.tiff
-              JP2.jp2
-              OCR.txt
-              TN.jpg
-          2/
-              OBJ.tiff
-              JP2.jp2
-              OCR.txt
-              TN.jpg
-  */
-}
-
-/**
- * Creates the object-level output directory for book objects.
+ * Creates the output directory for book and newspaper issue objects.
  *
  * @param AbstractObject $object
  *   The book object that has just been ingested.
  */
-function islandora_dump_datastreams_dump_book(AbstractObject $object) {
+function islandora_dump_datastreams_dump_paged_parent_object(AbstractObject $object) {
   $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
   $object_dir_name = preg_replace('/:/', '_', $object->id);
   $output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $object_dir_name;
@@ -148,24 +119,11 @@ function islandora_dump_datastreams_dump_book(AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $pages = islandora_paged_content_get_pages($object);
   $dsids_to_skip = islandora_dump_datastreams_dsids_to_skip();
-  /*
-  @todo: Get pages and write them out in the structure required by
-  the Book Batch module:
-
-  /tmp/batch_ingest/
-   └── book/
-        ├── 1/
-        │   └── OBJ.tif
-        ├── 2/
-        │   ├── OBJ.tif
-        │   ├── OCR.txt
-        │   ├── MODS.xml
-        │   └── HOCR.shtml
-        └── MODS.xml
-  */
   foreach ($pages as $page) {
     $page_dir = $output_dir . DIRECTORY_SEPARATOR . $page['page'];
-    mkdir($page_dir);
+    if (!file_exists($page_dir)) {
+      mkdir($page_dir);
+    }
     $page_object = islandora_object_load($page['pid']);
     foreach ($page_object as $ds) {
       if (!in_array($ds->id, $dsids_to_skip)) {
@@ -223,8 +181,37 @@ function islandora_dump_datastreams_dump_datastream(AbstractObject $object, Abst
  * @param AbstractDatastream $datastream
  *   The datastream that has just been ingested.
  */
-function islandora_dump_datastreams_dump_datastream_paged_cmodels(AbstractObject $object, AbstractDatastream $datastream) {
+function islandora_dump_datastreams_dump_paged_children_datastream(AbstractObject $object, AbstractDatastream $datastream) {
+  $dsids_to_skip = islandora_dump_datastreams_dsids_to_skip();
+  if (in_array($datastream->id, $dsids_to_skip)) {
+    return;
+  }
+  $base_output_dir = variable_get('islandora_dump_datastreams_output_dir', '/tmp');
+  // Get the path to the correct page subdirectory using the page object's
+  // relationships to its parent.
+  $rels_ispageof = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
+  $parent_pid = $rels_ispageof[0]['object']['value'];
+  $rels_ispagenumber = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageNumber');
+  $page_num = $rels_ispagenumber[0]['object']['value'];
 
+  $parent_dir_name = preg_replace('/:/', '_', $parent_pid);
+  $extension = islandora_dump_datastreams_get_extension($datastream->id, $datastream->mimetype);
+  $filename = $datastream->id . '.' . $extension;
+
+  $parent_output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $parent_dir_name;
+  if (!file_exists($parent_output_dir)) {
+    mkdir($parent_output_dir);
+  }
+
+  $page_output_dir = $base_output_dir . DIRECTORY_SEPARATOR . $parent_dir_name .
+    DIRECTORY_SEPARATOR . $page_num;
+  if (!file_exists($page_output_dir)) {
+    mkdir($page_output_dir);
+  }
+  $ds_output_path = $page_output_dir . DIRECTORY_SEPARATOR . $filename;
+  if (!file_exists($ds_output_path)) {
+    $datastream->getContent($ds_output_path);
+  }
 }
 
 /**

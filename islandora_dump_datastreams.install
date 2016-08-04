@@ -1,0 +1,19 @@
+<?php
+/**
+ * @file
+ * Installation hooks for Islandora Dump Datastreams.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_dump_datastreams_uninstall() {
+  $vars = array(
+    'islandora_dump_datastreams_enable',
+    'islandora_dump_datastreams_log_dumps',
+    'islandora_dump_datastreams_output_dir',
+    'islandora_dump_datastreams_skip_dsids',
+    'islandora_dump_datastreams_cmodel',
+  );
+  array_walk($vars, 'variable_del');
+}

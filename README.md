@@ -2,7 +2,11 @@
 
 Utility module that writes out an object's datastreams to the specified directory upon ingestion. The original use case for this module was to generate derivates for ingestion into another Islandora instance using the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module. But, its output could be used for other purposes, such as backup, migration, or preservation storage.
 
-Currently, this module only dumps datastreams for objects that do not have any children (e.g. basic image, large image, PDF, video, audio, etc.).
+Currently, this module dumps datastreams for:
+
+* single-file objects (e.g. basic image, large image, PDF, video, audio, etc.)
+* books
+* newspaper issues
 
 ## Requirements
 
@@ -45,7 +49,7 @@ Each object that is ingested will get its own subdirectory beneath the output di
     └── TN.jpg
 ```
 
-The names of the object subdirectories are derived from the object's PID so they are guaranteed to be unique.
+The names of the object subdirectories are derived from the object's PID so they are guaranteed to be unique. The output produced for books and newspaper issues is consistent with the input documented in the READMEs for the [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) and [Islandora Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch) modules.
 
 ## Usage in conjuction with the Islandora Batch with Derivs module
 
@@ -63,7 +67,6 @@ Pull requests are welcome, as are use cases and suggestions.
 
 ## Further Development
 
-* Add logic to output newspaper and book objects and all their pages' derivatives so that they can be ingested with [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch)
 * Add logic to output generic compound objects and their childrens' derivatives
 * Add the ability to purge an object after it has been dumped, so that worker Islandora instances do not not need to keep two "copies" of each object (the ingested copy and the dumped copy)
 
