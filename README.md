@@ -51,11 +51,13 @@ Each object that is ingested will get its own subdirectory beneath the output di
 
 The names of the object subdirectories are derived from the object's PID so they are guaranteed to be unique. The output produced for books and newspaper issues is consistent with the input documented in the READMEs for the [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) and [Islandora Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch) modules.
 
-## Usage in conjuction with the Islandora Batch with Derivs module
+## Usage in conjuction with the Islandora Batch with Derivs (and Islandora Book Batch and Islandora Newspaper Batch) modules
 
 As stated above, this module was originally intended to generate input for the [Islandora Batch with Derivs](https://github.com/mjordan/islandora_batch_with_derivs) module as part of a strategy for speeding up large ingests. This strategy takes advantage of the idea that having pregenerated datastreams allows you to enable Islandora's "Defer derivative generation during ingest" option, which prevents all derivative-creation code from being fired, increasing ingest throughput substantially.
 
 One possible scenario is to set up a number of "worker" Islandora instances (using [Islandora Vagrant](https://github.com/Islandora-Labs/islandora_vagrant), for example), and then to ingest content into them using the standard Islandora Batch modules, [Batch](https://github.com/Islandora/islandora_batch), [Book Batch](https://github.com/Islandora/islandora_book_batch), and [Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch). Enabling Islandora Dump Datastreams on the worker Islandoras will result in a set of pregenerated datastreams that can then be ingested into the production Islandora quickly using Islandora Batch with Derivs. This strategy can be scaled up easily to massively parallelize the generation of derivatives.
+
+Some datastreams, in particular RELS-EXT, RELS-INT, and DC, contain PIDs and other information that is generated during ingest that will conflict or override the equivalent data generated on reingest. If you are using this module in the scenario described here, you will want to exlude those datastreams from this module's output.
 
 ## Maintainer
 

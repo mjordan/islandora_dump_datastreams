@@ -58,7 +58,7 @@ function islandora_dump_datastreams_admin_settings() {
     '#type' => 'textfield',
     '#size' => 100,
     '#default_value' => variable_get('islandora_dump_datastreams_skip_dsids', 'RELS-EXT,RELS-INT,DC'),
-    '#description' => t("Comma-separated list of datastream IDs to not dump."),
+    '#description' => t("Comma-separated list of datastream IDs to not dump. You generally want to skip DC, RELS-EXT, and RELS-INT as they contain nonportable data (like PIDs)."),
     '#maxlength' => 255,
   );
   module_load_include('inc', 'islandora_dump_datastreams', 'includes/utilities');
